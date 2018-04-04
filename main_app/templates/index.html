@@ -1,0 +1,243 @@
+{% load staticfiles %}
+
+<!DOCTYPE html>
+<meta charset="UTF-8"> 
+
+<html>
+
+	<head>
+		<link rel="icon" href="{% static 'favicon2.ico' %}" type="image/x-icon"/>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+		 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css"
+   integrity="sha512-M2wvCLH6DSRazYeZRIm1JnYyh22purTM+FDB5CsyxtQJYeKq83arPe5wgbNmcFXGqiSH2XR8dT/fJISVA1r/zQ=="
+   crossorigin=""/>
+		 <script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js"
+   integrity="sha512-lInM/apFSqyy1o6s89K4iQUKg6ppXEgsVxT35HbzUupEVRh2Eu9Wdl4tHj7dZO0s1uvplcYGmt3498TtHq+log=="
+   crossorigin=""></script>
+		<script src="{% static 'jquery.canvasjs.min.js' %}"></script>
+		<script src="{% static 'bootstrap.bundle.js' %}"></script>
+		<link rel="stylesheet" href="{% static 'bootstrap.css' %}">
+		<link rel="stylesheet" href="{% static 'style.css' %}">
+		<script>
+			var blueImg = "{% static 'node_1.png' %}";
+			var node_1_img = "{% static 'node_1.png' %}";
+			var node_2_img = "{% static 'node_2.png' %}";			
+			var node_3_img = "{% static 'node_3.png' %}";
+			var node_4_img = "{% static 'node_4.png' %}";
+			var node_5_img = "{% static 'node_5.png' %}";
+			var node_6_img = "{% static 'node_6.png' %}";
+
+			var lastMeasurements = [];
+			{% for l in last_m %}
+				var temp = '{{ l }}';
+				var tempA = temp.split("&#39;");
+				lastMeasurements.push([ tempA[5],tempA[7],tempA[9],tempA[11]]);
+			{% endfor %}
+			console.log("lastMeasurement:", lastMeasurements);
+
+			var past50Measurements = [];
+			{% for p in past50 %}
+				var temp = '{{ p }}';
+				var tempA = temp.split("&#39;");
+				past50Measurements.push([tempA[7], tempA[13] + "/" + tempA[15] + "/" + tempA[17] + " " + tempA[19] + ":" + tempA[21].split("&", 1), tempA[5]]);			
+			{% endfor %}
+			console.log("past50Measurements: ", past50Measurements);
+		</script>
+			<title>Ensketemp</title>
+	</head>
+
+	<body style="background-image: url({% static 'pattern.png' %})">
+		<div class="container">
+			<h1 style="margin: 0 auto 6px; color:white; font-size: 1px;";>ENSKETEMP</h1>
+			<div class="row align-items-center text-center">
+				<img src="{% static 'logo_small.png' %}" class="img-fluid" alt="Responsive image" style="width: 30%; margin:0 auto;"/>
+			</div>
+			<div class="row align-items-center">	
+				<h5 style="margin: 0 auto 12px;">Air Temperature Visualization of Public Space in Enschede</h5>
+			</div>
+
+			<div class="row" style="margin-bottom: 12px;">
+				<div class="col">
+					<div id="mapid" style="height: 500px; z-index: 99;"></div>
+				</div>
+				<div class="col">
+					<div id="barchart" style="height: 500px;"></div>
+				</div>
+			</div>
+			
+			<div class="row align-items-center">
+				<div id="squares">
+					<div id="square1"></div><p>Downtown/Commercial</p>
+					<div id="square2"></div><p>Urban Residential</p>	
+					<div id="square3"></div><p>Suburban Residential</p>	
+					<div id="square4"></div><p>Park</p>	
+					<div id="square5"></div><p>Rural</p>				
+				</div>			
+			</div>
+
+			<div class="row">
+				<div class="col">
+					<div id="linechart" style="height: 300px;"></div>
+				</div>
+			</div>
+			
+			<div class="row" style="margin-top: 12px;">
+			<!-- Nav tabs -->
+			<ul class="nav nav-tabs" id="sensorTab" role="tablist">
+			{% for s in sensor_l %}
+				{% if forloop.first %}
+				<li class="nav-item">
+					<a class="nav-link active" id="{{ s }}-tab" data-toggle="tab" href="#{{ s }}" role="tab" aria-controls="{{ s }}" aria-selected="true">{{ s }}</a>	
+				</li>
+				{% else %}
+				<li class="nav-item">
+					<a class="nav-link" id="{{ s }}-tab" data-toggle="tab" href="#{{ s }}" role="tab" aria-controls="{{ s }}" aria-selected="false">{{ s }}</a>	
+				</li>
+				{% endif %}
+			{% endfor %}
+			</ul>
+			<!-- Tab panes -->
+			<div class="tab-content">
+				{% for s in sensor_l %}
+					{% if forloop.first %}
+					<div class="tab-pane fade show active" id="{{ s }}" role="tabpanel" aria-labelledby="{{ s }}-tab">
+						<table class="table table-striped table-hover table-sm">
+							<thead class="thead-dark">
+								<tr>
+									<th scope="col">#</th>
+							      		<th scope="col">Device id:</th>
+							      		<th scope="col">Value:</th>
+									<th scope="col">Latitude:</th>
+									<th scope="col">Longitude:</th>
+							      		<th scope="col">Timestamp:</th>
+							    	</tr>
+							 </thead>
+							<tbody id="{{ s }}-tbody" class="scrollMe">
+								{% for m in measurements %}
+								{% if m.device_id == s.device_id %}
+								<tr>
+									<th scope="row">{{ m.id }}</th>
+									<td>{{ m.device_id }}</td>
+									<td>{{ m.value }}</td>
+									<td>{{ m.latitude }}</td>
+									<td>{{ m.longitude }}</td>
+									<td>{{ m.day }}/{{ m.month }}/{{ m.year }}, {{ m.hour }} : {{ m.minute }}</td>
+								</tr>
+								{% endif %}
+								{% endfor %}		
+							</tbody>
+						</table>
+					</div>
+					{% else %}
+					<div class="tab-pane fade" id="{{ s }}" role="tabpanel" aria-labelledby="{{ s }}-tab">
+						<table class="table table-striped table-hover table-sm">
+							<thead class="thead-dark">
+								<tr>
+									<th scope="col">#</th>
+							      		<th scope="col">Device id:</th>
+							      		<th scope="col">Value:</th>
+									<th scope="col">Latitude:</th>
+									<th scope="col">Longitude:</th>
+							      		<th scope="col">Timestamp</th>
+							    	</tr>
+							 </thead>
+							<tbody id="{{ s }}-tbody" class="scrollMe">
+								{% for m in measurements %}
+								{% if m.device_id == s.device_id %}
+								<tr>
+									<th scope="row">{{ m.id }}</th>
+									<td>{{ m.device_id }}</td>
+									<td>{{ m.value }}</td>
+									<td>{{ m.latitude }}</td>
+									<td>{{ m.longitude }}</td>
+									<td>{{ m.day }}/{{ m.month }}/{{ m.year }}, {{ m.hour }} : {{ m.minute }}</td>
+								</tr>
+								{% endif %}
+								{% endfor %}		
+							</tbody>
+						</table>
+					</div>
+					{% endif %}
+				{% endfor %}
+			</div>
+
+
+			</div>
+
+ 			<div class="row">
+
+			<!-- Old table -->
+			<h4>Measurements from all Sensors</h4>
+			<table class="table table-striped table-hover table-sm" style="margin-bottom: 55px;">
+				<thead class="thead-dark">
+					<tr>
+						<th scope="col">#</th>
+				      		<th scope="col">Device id:</th>
+				      		<th scope="col">Value:</th>
+						<th scope="col">Latitude:</th>
+						<th scope="col">Longitude:</th>
+				      		<th scope="col">Timestamp</th>
+				    	</tr>
+				 </thead>
+				<tbody id="datarows" class="scrollMe" style="height: 100px !important;">
+					{% for m in measurements %}
+					<tr>
+						<th scope="row">{{ m.id }}</th>
+						<td>{{ m.device_id }}</td>
+						<td>{{ m.value }}</td>
+						<td>{{ m.latitude }}</td>
+						<td>{{ m.longitude }}</td>
+						<td>{{ m.day }}/{{ m.month }}/{{ m.year }}, {{ m.hour }} : {{ m.minute }}</td>
+					</tr>
+					{% endfor %}		
+				</tbody>
+			</table>
+
+			</div>
+		</div>	<!-- Container end -->			
+	</body>
+
+	<footer>
+		<div class="row align-items-center">
+			<p style="margin: 0 auto;">A collaboration between the <a href="https://www.enschede.nl/" target="blank">Municipality of Enschede</a> and the <a href="https://www.utwente.nl/" target="blank">University of Twente</a> - Author: <a href="http://yoannlatzer.fr" target="blank">Yoann M.E.Latzer</a></p>
+		</div>	
+		<script>
+			var scr = $('#datarows')[0].scrollHeight;
+			$("#datarows,#node_1-tbody").each(function(){
+			    $(this).animate({
+				scrollTop: this.scrollHeight
+			    }, 2000);
+			});
+
+			$("#node_2-tab").click(function() {
+				$("#node_2-tbody").animate({ 
+					scrollTop: scr 
+				}, 2000); 
+			});
+			$("#node_3-tab").click(function() {
+				$("#node_3-tbody").animate({ 
+					scrollTop: scr 
+				}, 2000); 
+			});
+			$("#node_4-tab").click(function() {
+				$("#node_4-tbody").animate({ 
+					scrollTop: scr 
+				}, 2000); 
+			});
+			$("#node_5-tab").click(function() {
+				$("#node_5-tbody").animate({ 
+					scrollTop: scr 
+				}, 2000); 
+			});
+			$("#node_6-tab").click(function() {
+				$("#node_6-tbody").animate({ 
+					scrollTop: scr 
+				}, 2000); 
+			});
+			//objDiv.scrollTop = objDiv.scrollHeight;
+		</script>
+		<script src="{% static 'visualization.js' %}"></script>
+		<script src="{% static 'messages.js' %}"></script>
+	</footer>
+
+</html>
